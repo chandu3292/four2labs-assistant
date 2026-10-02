@@ -1,6 +1,8 @@
-# DocQuery
+# Four2Labs Assistant
 
-A multimodal AI agent platform that combines real-time voice conversation, intelligent document processing, and calendar scheduling into a single integrated system. Users interact with a context-aware AI assistant via text chat or voice, asking questions about uploaded documents, and booking appointments through natural language.
+A multimodal AI agent platform by [four2labs](https://four2labs.com) — *AI Automation, Web Development & Tech Consulting* — that combines real-time voice conversation, intelligent document processing, and calendar scheduling into a single integrated system. Users interact with a context-aware AI assistant via text chat or voice, asking questions about uploaded documents, and booking appointments through natural language.
+
+Doubles as four2labs' own customer-facing demo and a reference implementation for client AI-automation projects.
 
 ---
 
@@ -132,8 +134,8 @@ Business hours default to Monday through Friday, 9 AM to 5 PM IST, in 30-minute 
 ### Setup
 
 ```bash
-git clone https://github.com/chandu3292/livekits.git
-cd livekits
+git clone https://github.com/chandu3292/four2labs-assistant.git
+cd four2labs-assistant
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
@@ -183,7 +185,7 @@ PORT=8005
 ## Project Structure
 
 ```
-livekits/
+four2labs-assistant/
 ├── server.py               FastAPI server, RAG, MCP tool endpoints
 ├── mcp-agent.py            LiveKit voice agent
 ├── agent_personas.py       Persona definitions and voice mappings

@@ -1,0 +1,7 @@
+assistant.four2labs.com {
+	reverse_proxy localhost:8005
+}
+
+livekit.four2labs.com {
+	reverse_proxy localhost:7880
+}

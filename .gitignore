@@ -5,3 +5,21 @@ __pycache__/
 node_modules/
 dist/
 qwen/
+
+# Secrets — never commit credentials
+credentials/
+*.key
+*.pem
+
+# Recorded voice sessions (audio + transcripts)
+sessions/
+
+# Per-service runtime logs
+logs/
+
+# Real LiveKit server config holds the API secret; copy livekit.yaml.example
+deploy/livekit.yaml
+
+# Local Claude Code settings
+.claude/settings.json
+.claude/settings.local.json

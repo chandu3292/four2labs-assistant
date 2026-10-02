@@ -1,0 +1,71 @@
+name: four2labs-assistant
+
+# Full self-hosted stack on one VM (all host networking so WebRTC UDP works):
+#   caddy    - TLS for assistant.four2labs.com + livekit.four2labs.com
+#   livekit  - self-hosted LiveKit server (signaling 7880, RTC tcp 7881 / udp 7882)
+#   app      - FastAPI + RAG + UI
+#   agent    - LiveKit voice agent
+# No TURN (direct UDP + TCP fallback). Add TURN later if a client network blocks UDP.
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+      - livekit
+
+  livekit:
+    image: livekit/livekit-server:latest
+    restart: unless-stopped
+    network_mode: host
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: four2labs-assistant:latest
+    command: python server.py
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env
+    environment:
+      PORT: "8005"
+      LIVEKIT_URL: "wss://livekit.four2labs.com"   # public URL handed to the browser
+      SEED_DOCS_DIR: "/app/seed"
+    volumes:
+      - ../credentials:/app/credentials:ro
+      - sessions:/app/sessions
+      - hf_cache:/cache/hf
+      - ./seed:/app/seed:ro
+
+  agent:
+    image: four2labs-assistant:latest
+    command: python mcp-agent.py start
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      - app
+      - livekit
+    env_file: .env
+    environment:
+      PORT: "8005"
+      LIVEKIT_URL: "ws://localhost:7880"             # internal: local LiveKit server
+      MCP_SERVER_URL: "http://localhost:8005/mcp/sse"
+    volumes:
+      - sessions:/app/sessions
+      - hf_cache:/cache/hf
+
+volumes:
+  caddy_data:
+  caddy_config:
+  sessions:
+  hf_cache:

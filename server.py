@@ -273,6 +273,34 @@ active_persona_id: str = DEFAULT_PERSONA_ID
 chat_histories: dict = {}
 
 
+@app.on_event("startup")
+async def _seed_knowledge_base():
+    """Pre-load documents from SEED_DOCS_DIR so the demo is never empty.
+    Each file is indexed under its own source_name (the filename stem)."""
+    seed_dir = os.getenv("SEED_DOCS_DIR")
+    if not seed_dir or not os.path.isdir(seed_dir):
+        return
+    for fname in sorted(os.listdir(seed_dir)):
+        path = os.path.join(seed_dir, fname)
+        if not os.path.isfile(path):
+            continue
+        ext = os.path.splitext(fname)[1].lower()
+        if ext not in ALL_UPLOAD_EXTENSIONS:
+            continue
+        try:
+            with open(path, "rb") as f:
+                data = f.read()
+            if ext in OCR_EXTENSIONS or ext == ".pdf":
+                text = ocr_process_file(data, fname).get("text", "")
+            else:
+                text = data.decode("utf-8", errors="ignore")
+            if text.strip():
+                rag.build_index(text, source_name=os.path.splitext(fname)[0])
+                logger.info(f"[SEED] Indexed '{fname}'")
+        except Exception as e:
+            logger.warning(f"[SEED] Failed to index '{fname}': {e}")
+
+
 # --- API Endpoints ---
 
 @app.get("/")
@@ -400,13 +428,14 @@ async def chat(req: ChatMessage):
 
     # Build the prompt with system context
     system_prompt = (
-        "You are a helpful AI assistant. You work at DocQuery. "
+        "You are a helpful AI assistant. You work at Four2Labs. "
         "Be concise, friendly, and helpful. Use the provided context to answer questions accurately. "
         "If the context doesn't contain relevant information, use your general knowledge but mention that. "
         "IMPORTANT: Detect the language of the user's message and ALWAYS respond in the SAME language. "
         "For example, if the user writes in Telugu, respond entirely in Telugu. "
         "If the user writes in Hindi, respond in Hindi. If in English, respond in English. "
-        "Never mix languages — reply fully in the user's language."
+        "Never mix languages, reply fully in the user's language. "
+        "Do not use em-dashes (the long dash) anywhere in your replies; use commas, periods, or 'and' instead."
     )
 
     if rag_context:

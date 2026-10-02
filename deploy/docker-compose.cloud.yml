@@ -1,0 +1,59 @@
+name: four2labs-assistant
+
+# Cloud variant: voice runs on LiveKit Cloud (no self-hosted LiveKit/TURN).
+# Only the app + agent + a plain Caddy (auto-HTTPS) run here.
+# LIVEKIT_URL in .env must be your LiveKit Cloud wss URL (used by BOTH the
+# browser, via /token, and the agent to connect).
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: four2labs-assistant:latest
+    command: python server.py
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: "8005"
+      SEED_DOCS_DIR: "/app/seed"
+    expose:
+      - "8005"
+    volumes:
+      - ../credentials:/app/credentials:ro
+      - sessions:/app/sessions
+      - hf_cache:/cache/hf
+      - ./seed:/app/seed:ro
+
+  agent:
+    image: four2labs-assistant:latest
+    command: python mcp-agent.py start
+    restart: unless-stopped
+    depends_on:
+      - app
+    env_file: .env
+    environment:
+      PORT: "8005"
+      MCP_SERVER_URL: "http://app:8005/mcp/sse"
+    volumes:
+      - sessions:/app/sessions
+      - hf_cache:/cache/hf
+
+volumes:
+  caddy_data:
+  caddy_config:
+  sessions:
+  hf_cache:

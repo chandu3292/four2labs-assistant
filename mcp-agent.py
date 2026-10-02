@@ -48,10 +48,11 @@ class MyAgent(Agent):
         self.persona_name = persona_name
 
         base_instruction = (
-            f"Your name is {persona_name}. You work at DocQuery. "
+            f"Your name is {persona_name}. You work at Four2Labs. "
             f"You are a versatile voice assistant specialized in English, Hindi, and Telugu. "
             f"STRICTLY respond ONLY in {target_lang}. "
             "Keep responses extremely concise and natural. "
+            "Never use em-dashes (the long dash) in anything you say; use commas or short sentences instead. "
             "For ANY question (EXCEPT for order bookings or providing order details), you MUST use the tool 'query_knowledge_base'. "
             "Explain the answer using the information found in the tool context. "
             "give respose as you are talking in a conversation"
@@ -96,11 +97,23 @@ class MyAgent(Agent):
             return
 
         if self.forced_language == "hi":
-            greeting = f"DocQuery में आपका स्वागत है। मैं {self.persona_name} हूँ। आज मैं आपकी कैसे मदद कर सकती हूँ?"
+            greeting = (
+                f"नमस्ते, four2labs में आपका स्वागत है! मैं {self.persona_name} हूँ, आपकी AI सहायक। "
+                "हम बढ़ते व्यवसायों के लिए वेबसाइट, ऐप, AI ऑटोमेशन और डैशबोर्ड बनाते हैं। "
+                "क्या आप एक मुफ़्त कंसल्टेशन बुक करना चाहेंगे, या आपका कोई सवाल है जिसमें मैं मदद कर सकूँ?"
+            )
         elif self.forced_language == "te":
-            greeting = f"DocQuery కు స్వాగతం. నేను {self.persona_name}. ఈ రోజు నేను మీకు ఎలా సహాయం చేయగలను?"
+            greeting = (
+                f"నమస్తే, four2labs కు స్వాగతం! నేను {self.persona_name}, మీ AI అసిస్టెంట్. "
+                "మేము ఎదుగుతున్న వ్యాపారాల కోసం వెబ్‌సైట్‌లు, యాప్‌లు, AI ఆటోమేషన్ మరియు డాష్‌బోర్డ్‌లు తయారు చేస్తాము. "
+                "మీరు ఉచిత కన్సల్టేషన్ బుక్ చేయాలనుకుంటున్నారా, లేదా నేను సహాయం చేయగల ఏదైనా ప్రశ్న ఉందా?"
+            )
         else:
-            greeting = f"Welcome to DocQuery. I'm {self.persona_name}. How can I help you today?"
+            greeting = (
+                f"Hi, welcome to four2labs! I'm {self.persona_name}, your AI assistant. "
+                "We help growing businesses with websites, apps, AI automation and dashboards. "
+                "Would you like to book a free consultation, or is there something I can help you with today?"
+            )
 
         await asyncio.sleep(1)
         await self.voice_session.say(
@@ -167,7 +180,10 @@ async def entrypoint(ctx: JobContext):
         tts=tts,
         mcp_servers=[
             mcp.MCPServerHTTP(
-                url=f"http://127.0.0.1:{os.getenv('PORT', '8000')}/mcp/sse"
+                url=os.getenv(
+                    "MCP_SERVER_URL",
+                    f"http://127.0.0.1:{os.getenv('PORT', '8000')}/mcp/sse",
+                )
             )
         ],
         preemptive_generation=True,
